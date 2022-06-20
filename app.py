@@ -4,6 +4,7 @@
 
 import json
 from os import name
+from this import d
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -160,10 +161,11 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   venue = Venue.query.get(venue_id) 
+  print(venue.genres)
   data = {
     "id": venue.id, 
     "name": venue.name,
-    "genres": venue.genres,
+    "genres": venue.genres[1:-1].split(','),
     "address": venue.address,
     "city": venue.city,
     "state": venue.state,
@@ -178,6 +180,7 @@ def show_venue(venue_id):
     "past_shows_count": 0,
     "upcoming_shows_count": 0
   }
+
   for show in venue.shows:
     if show.start_time < datetime.now():
       data['past_shows'].append({
@@ -195,6 +198,7 @@ def show_venue(venue_id):
         "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
       })
       data['upcoming_shows_count'] += 1
+  print(data)
   return render_template('pages/show_venue.html', venue=data)
   
 #  Create Venue
