@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------------#
 
 import json
+from os import name
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -12,6 +13,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from flask_migrate import Migrate
 import sys
 #----------------------------------------------------------------------------#
 # App Config.
@@ -22,6 +24,7 @@ moment = Moment(app)
 app.config.from_object('config')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # TODO: connect to a local postgresql database
 
@@ -32,37 +35,21 @@ db = SQLAlchemy(app)
 class Venue(db.Model):
     __tablename__ = 'Venue'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String()))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    website_link = db.Column(db.String(120))
-    talent = db.Column(db.Boolean)
-    description = db.Column(db.String(500))
+    genres = db.Column(db.String(300), nullable=False)
+    website = db.Column(db.String(120))
+    talent = db.Column(db.Boolean,  default=False)
+    description = db.Column(db.String(120))
     shows = db.relationship('Show', backref='venue', lazy=True)
 
-
-
-    # id = db.Column(db.Integer, primary_key=True)
-    # name = db.Column(db.String, nullable=False)
-    # city = db.Column(db.String(120), nullable=False)
-    # state = db.Column(db.String(120), nullable=False)
-    # address = db.Column(db.String(120), nullable=False)
-    # phone = db.Column(db.String(120), nullable=False)
-    # image_link = db.Column(db.String(500))
-    # facebook_link = db.Column(db.String(120))
-    # genres = db.Column(db.String(300), nullable=False)
-    # website = db.Column(db.String(120))
-    # talent = db.Column(db.Boolean,  default=False)
-    # description = db.Column(db.String(120))
-    # shows = db.relationship('Show', backref='venue', lazy=True)
-
     def __repr__(self):
-        return f'<venue_id: {self.id}, name: {self.name}>'
+      return f'<venue_id: {self.id}, name: {self.name} >'
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -84,7 +71,7 @@ class Artist(db.Model):
     shows = db.relationship('Show', backref='artist', lazy=True)
   
     def __repr__(self):
-        return f'<artist: {self.id}, name: {self.name} >'
+      return f'<artist: {self.id}, name: {self.name} >'
 
 
 
@@ -96,7 +83,7 @@ class Show(db.Model):
   start_time = db.Column(db.DateTime, nullable=False)
 
   def __repr__(self):
-      return f'<show_id: {self.id}, venue_id: {self.venue_id}, artist_id: {self.artist_id}>'
+    return f'<show_id: {self.id}, venue_id: {self.venue_id}, artist_id: {self.artist_id} >'
       
 # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -132,18 +119,27 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  data = []
-  venues = Venue.query.all()
-  for venue in venues:
-    num_upcoming_shows = 0
-    for show in venue.shows:
-      if show.start_time > datetime.now():
-        num_upcoming_shows += 1
-    data.append({
-      "id": venue.id,
-      "name": venue.name,
-      "num_upcoming_shows": num_upcoming_shows
-    })
+  data=[]
+  cities = Venue.query.distinct(Venue.city, Venue.state).all()
+  for city in cities:
+    city_data = {
+      "city": city.city,
+      "state": city.state,
+      "venues": []
+    }
+    venues = Venue.query.filter_by(city=city.city, state=city.state).all()
+    for venue in venues:
+      num_upcoming_shows = 0
+      for show in venue.shows:
+        if show.start_time > datetime.now():
+          num_upcoming_shows += 1
+      venue_data = {
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": num_upcoming_shows
+      }
+      city_data["venues"].append(venue_data)
+    data.append(city_data)
     
   return render_template('pages/venues.html', areas=data);
 
@@ -216,6 +212,7 @@ def create_venue_submission():
   # TODO: modify data to be the data object returned from db insertion
   error = False
   formdata = request.form
+  print(str(request.form))
   try:
     venue = Venue(
       name=formdata['name'],
@@ -227,21 +224,22 @@ def create_venue_submission():
       facebook_link=formdata['facebook_link'],
       image_link = formdata['image_link'],
       website = formdata['website_link'],
-      talent = formdata['seeking_talent'],
+      talent = True if formdata['seeking_talent'] == 'y' else False,
       description = formdata['seeking_description']
     )
     db.session.add(venue)
     db.session.commit()
-  except:
+  except Exception as e:
+    print(e.message)
     error = True
     db.session.rollback()
     print(sys.exc_info())
   finally:
     db.session.close()
-  if error:
-    flash('An error occurred. Venue ' + formdata['name'] + ' could not be listed.')
-  else:
-   flash('Venue ' + formdata['name'] + ' was successfully listed!')
+    if error:
+      flash('An error occurred. Venue ' + formdata['name'] + ' could not be listed.')
+    else:
+     flash('Venue ' + formdata['name'] + ' was successfully listed!')
    
   return render_template('pages/home.html')
 
@@ -370,7 +368,7 @@ def edit_artist_submission(artist_id):
       facebook_link = formdata['facebook_link'],
       image_link = formdata['image_link'],
       website = formdata['website'],
-      venue = formdata['seeking_venue'],
+      venue = True if formdata['seeking_venue'] == 'y' else False,
       description = formdata['seeking_description']
     )
     db.session.commit()
@@ -466,7 +464,7 @@ def create_artist_submission():
       facebook_link = formdata['facebook_link'],
       image_link = formdata['image_link'],
       website = formdata['website'],
-      venue = formdata['seeking_venue'],
+      venue = True if formdata['seeking_venue'] == 'y' else False,
       description = formdata['seeking_description']
     )
     db.session.add(artist)
@@ -567,7 +565,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 # Or specify port manually:
 '''
