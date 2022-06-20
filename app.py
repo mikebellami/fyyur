@@ -75,6 +75,7 @@ class Artist(db.Model):
     class Show(db.Model):
         __tablename__ = 'Show'
 
+
         id = db.Column(db.Integer, primary_key=True)
         venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
         artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
@@ -196,50 +197,53 @@ def create_venue_submission():
 
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-    formdata = request.form
+  error = False
+  formdata = request.form
+  try:
     venue = Venue(
-        name=formdata['name'],
-        city=formdata['city'],
-        state=formdata['state'],
-        address=formdata['address'],
-        phone=formdata['phone'],
-        genres=formdata['genres'],
-        facebook_link=formdata['facebook_link'],
-        image_link = formdata['image_link'],
-        website = formdata['website_link'],
-        talent = formdata['seeking_talent'],
-        description = formdata['seeking_description']
-      )
-      
-    try:
-      db.session.add(venue)
-      db.session.commit()
-      flash('Venue ' + formdata['name'] + ' was successfully listed!')
-    except:
-      flash('An error occurred. Venue ' + formdata['name'] + ' could not be listed.')
-      db.session.rollback()
-      print(sys.exc_info())
-    finally:
-      db.session.close()
-    return render_template('pages/home.html')
-  
+      name=formdata['name'],
+      city=formdata['city'],
+      state=formdata['state'],
+      address=formdata['address'],
+      phone=formdata['phone'],
+      genres=formdata.getlist('genres'),
+      facebook_link=formdata['facebook_link'],
+      image_link = formdata['image_link'],
+      website = formdata['website_link'],
+      talent = formdata['seeking_talent'],
+      description = formdata['seeking_description']
+    )
+    db.session.add(venue)
+    db.session.commit()
+    flash('Venue ' + formdata['name'] + ' was successfully listed!')
+  except:
+    flash('An error occurred. Venue ' + formdata['name'] + ' could not be listed.')
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+    flash('An error occurred. Venue ' + formdata['name'] + ' could not be listed.')
+  else:
+   flash('Venue ' + formdata['name'] + ' was successfully listed!')
+  return render_template('pages/home.html')
+
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-    result = Venue.query.filter(venue_id == Venue.id)
-    try:
-      db.session.delete(result)
-      db.session.commit()
-      flash('Venue ' + result.name+ ' was deleted from list of venues!')
-    except:
-         db.session.rollback()
-         print(sys.exc_info())
-         flash('unable to delete Venue')
-    finally:
-        db.session.close()
-    return render_template('pages/home.html')
-
+  try:
+    venue = Venue.query.get(venue_id)
+    db.session.delete(venue)
+    db.session.commit()
+    flash('Venue ' + venue.name + ' was successfully deleted!')
+  except:
+    flash('An error occurred. Venue ' + venue.name + ' could not be deleted.')
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  return render_template('pages/home.html')
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
 
