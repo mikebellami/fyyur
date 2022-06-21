@@ -4,7 +4,7 @@
 
 import json
 from os import name
-from this import d
+# from this import d
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -57,17 +57,16 @@ class Venue(db.Model):
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
-
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    genres = db.Column(db.String(300), nullable=False)
+    venue = db.Column(db.Boolean, default=False)
     website = db.Column(db.String(120))
-    venue = db.Column(db.Boolean, nullable=False)
     description = db.Column(db.String(120))
     shows = db.relationship('Show', backref='artist', lazy=True)
   
@@ -161,7 +160,6 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   venue = Venue.query.get(venue_id) 
-  print(venue.genres)
   data = {
     "id": venue.id, 
     "name": venue.name,
@@ -198,7 +196,6 @@ def show_venue(venue_id):
         "start_time": show.start_time.strftime('%Y-%m-%d %H:%M:%S')
       })
       data['upcoming_shows_count'] += 1
-  print(data)
   return render_template('pages/show_venue.html', venue=data)
   
 #  Create Venue
@@ -216,7 +213,6 @@ def create_venue_submission():
   # TODO: modify data to be the data object returned from db insertion
   error = False
   formdata = request.form
-  print(str(request.form))
   try:
     venue = Venue(
       name=formdata['name'],
@@ -233,8 +229,7 @@ def create_venue_submission():
     )
     db.session.add(venue)
     db.session.commit()
-  except Exception as e:
-    print(e.message)
+  except:
     error = True
     db.session.rollback()
     print(sys.exc_info())
@@ -402,7 +397,7 @@ def edit_venue(venue_id):
   form.genres.data = venue.genres
   form.facebook_link.data = venue.facebook_link
   form.image_link.data = venue.image_link
-  form.website.data = venue.website
+  form.website_link.data = venue.website
   form.seeking_talent.data = venue.talent
   form.seeking_description.data = venue.description  
   
@@ -416,19 +411,16 @@ def edit_venue_submission(venue_id):
   formdata = request.form
   try:
     venue = Venue.query.get(venue_id)
-    venue = Venue(
-      name = formdata['name'],
-      city = formdata['city'],
-      state = formdata['state'],
-      phone = formdata['phone'],
-      address = formdata['address'],
-      genres = formdata['genres'],
-      facebook_link = formdata['facebook_link'],
-      image_link = formdata['image_link'],
-      website = formdata['website'],
-      talent = formdata['seeking_talent'],
-      description = formdata['seeking_description']
-    )
+    venue.name = formdata['name'],
+    venue.city = formdata['city'],
+    venue.state = formdata['state'],
+    venue.phone = formdata['phone'],
+    venue.address = formdata['address'],
+    venue.genres = formdata['genres'],
+    venue.facebook_link = formdata['facebook_link'],
+    venue.image_link = formdata['image_link'],
+    venue.website = formdata['website_link'],
+    venue.description = formdata['seeking_description']
     db.session.commit()
   except:
     error = True
@@ -464,16 +456,17 @@ def create_artist_submission():
       city = formdata['city'],
       state = formdata['state'],
       phone = formdata['phone'],
-      genres = formdata['genres'],
+      genres = formdata.getlist('genres'),
       facebook_link = formdata['facebook_link'],
       image_link = formdata['image_link'],
-      website = formdata['website'],
+      website = formdata['website_link'],
       venue = True if formdata['seeking_venue'] == 'y' else False,
       description = formdata['seeking_description']
     )
     db.session.add(artist)
     db.session.commit()
   except:
+    
     error = True
     db.session.rollback()
     print(sys.exc_info())
