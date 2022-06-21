@@ -345,7 +345,7 @@ def edit_artist(artist_id):
   form.genres.data = artist.genres
   form.facebook_link.data = artist.facebook_link
   form.image_link.data = artist.image_link
-  form.website.data = artist.website
+  form.website_link.data = artist.website
   form.seeking_venue.data = artist.venue
   form.seeking_description.data = artist.description
   return render_template('forms/edit_artist.html', form=form, artist=artist)
@@ -358,18 +358,15 @@ def edit_artist_submission(artist_id):
   formdata = request.form
   try:
     artist = Artist.query.get(artist_id)
-    artist = Artist(
-      name = formdata['name'],
-      city = formdata['city'],
-      state = formdata['state'],
-      phone = formdata['phone'],
-      genres = formdata['genres'],
-      facebook_link = formdata['facebook_link'],
-      image_link = formdata['image_link'],
-      website = formdata['website'],
-      venue = True if formdata['seeking_venue'] == 'y' else False,
-      description = formdata['seeking_description']
-    )
+    artist.name = formdata['name'],
+    artist.city = formdata['city'],
+    artist.state = formdata['state'],
+    artist.phone = formdata['phone'],
+    artist.genres = formdata['genres'],
+    artist.facebook_link = formdata['facebook_link'],
+    artist.image_link = formdata['image_link'],
+    artist.website = formdata['website_link'],
+    artist.description = formdata['seeking_description']
     db.session.commit()
   except:
     error = True
@@ -466,7 +463,6 @@ def create_artist_submission():
     db.session.add(artist)
     db.session.commit()
   except:
-    
     error = True
     db.session.rollback()
     print(sys.exc_info())
