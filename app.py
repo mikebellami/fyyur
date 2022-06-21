@@ -4,8 +4,7 @@
 
 import json
 from os import name
-# from this import d
-import dateutil.parser
+import dateutil.parser 
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
@@ -497,7 +496,7 @@ def shows():
       "artist_id": show.artist_id,
       "artist_name": show.artist.name,
       "artist_image_link": show.artist.image_link,
-      "start_time": show.start_time
+      "start_time": str(show.start_time)
     })
   return render_template('pages/shows.html', shows=data)
 
