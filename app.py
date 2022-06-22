@@ -24,7 +24,7 @@ from forms import *
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 import sys
-from models import Venue, Artist, Show
+from models import Venue, Artist, Show, db
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -32,7 +32,7 @@ from models import Venue, Artist, Show
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db = SQLAlchemy(app)
+db.init_app(app)
 migrate = Migrate(app, db)
 
 
@@ -111,7 +111,7 @@ def show_venue(venue_id):
   data = {
     "id": venue.id, 
     "name": venue.name,
-    "genres": venue.genres[1:-1].split(','),
+    "genres": venue.genres,
     "address": venue.address,
     "city": venue.city,
     "state": venue.state,
