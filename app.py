@@ -4,6 +4,7 @@
 
 import json
 from os import name
+from click import Choice
 import dateutil.parser 
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -22,7 +23,6 @@ import sys
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -211,7 +211,7 @@ def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
   error = False
-  formdata = request.form
+  formdata = VenueForm(request.form)
   try:
     venue = Venue(
       name=formdata['name'],
