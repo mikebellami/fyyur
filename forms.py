@@ -43,7 +43,8 @@ class VenueForm(Form):
          validators=[DataRequired(), Regexp('^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$')]
     )
     image_link = StringField(
-        'image_link'
+        'image_link',
+         validators=[URL()]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -59,7 +60,10 @@ class VenueForm(Form):
         validators=[URL()]
     )
 
-    seeking_talent = BooleanField( 'seeking_talent' )
+    seeking_talent = BooleanField( 
+        'seeking_talent',
+         default=False
+        )
 
     seeking_description = StringField(
         'seeking_description' 
@@ -100,7 +104,10 @@ class ArtistForm(Form):
         'website_link'
      )
 
-    seeking_venue = BooleanField( 'seeking_venue' )
+    seeking_venue = BooleanField( 
+        'seeking_venue',
+        default=False
+     )
 
     seeking_description = StringField(
             'seeking_description'
