@@ -126,6 +126,7 @@ def show_venue(venue_id):
     "past_shows_count": 0,
     "upcoming_shows_count": 0
   }
+  
   for show in venue.shows:
     if show.start_time <= datetime.now():
       data['past_shows'].append({
@@ -355,6 +356,7 @@ def show_artist(artist_id):
     "past_shows_count": 0,
     "upcoming_shows_count": 0
   }
+  print(past_shows_query)
   for show in artist.shows:
     if show.start_time < datetime.now():
       data['past_shows'].append({
